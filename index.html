@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareLink Genogram</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f3fbf7;
+  --surface: #ffffff;
+  --surface2: #eef8f3;
+  --border: #cfe4da;
+  --accent: #2b7fd1;
+  --accent2: #63c14b;
+  --accent3: #36a96d;
+  --text: #183247;
+  --text2: #5d7584;
+  --male: #2b7fd1;
+  --female: #63c14b;
+  --deceased: #7f8c97;
+  --org-color: #63c14b;
+  --shadow: 0 2px 12px rgba(24,50,71,0.10);
+  --radius: 10px;
+  --header-grad1: #2b7fd1;
+  --header-grad2: #63c14b;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+header {
+  background: linear-gradient(90deg, var(--header-grad1), var(--header-grad2));
+  color: white;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+header h1 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+header span.sub { font-size: 0.8rem; opacity: 0.82; margin-left: 8px; }
+.logo-mark {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: block;
+}
+
+.layout { display: flex; height: calc(100vh - 72px); overflow: hidden; }
+
+/* ─── LEFT PANEL ─── */
+.panel {
+  width: 360px; min-width: 320px;
+  background: var(--surface);
+  border-right: 1.5px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.panel-section {
+  border-bottom: 1px solid var(--border);
+  padding: 16px;
+}
+.panel-section h2 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.panel-section h2 .badge {
+  background: var(--accent);
+  color: white;
+  border-radius: 20px;
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+}
+
+.field-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+.field-row label { font-size: 0.78rem; color: var(--text2); min-width: 60px; }
+input[type=text], input[type=number], select, textarea {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.82rem;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 9px;
+  background: #ffffff;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(43,127,209,0.12);
+}
+.radio-group { display: flex; gap: 10px; align-items: center; }
+.radio-group label { display: flex; align-items: center; gap: 4px; font-size: 0.82rem; cursor: pointer; min-width: auto; }
+input[type=radio] { accent-color: var(--accent); }
+input[type=checkbox] { accent-color: var(--accent2); width: 14px; height: 14px; }
+
+/* Family members */
+.member-card {
+  background: #f8fcfa;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1.5px solid var(--border);
+  position: relative;
+}
+.member-card .card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.member-card .card-title { font-size: 0.8rem; font-weight: 600; color: var(--accent); }
+.btn-del {
+  background: #e9f7ef; color: #1f8d55;
+  border: none; border-radius: 5px;
+  font-size: 0.72rem; padding: 2px 8px;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-del:hover { background: #cfeedd; }
+
+.btn {
+  font-family: 'Noto Sans JP', sans-serif;
+  border: none; border-radius: 6px; cursor: pointer;
+  font-size: 0.82rem; font-weight: 500;
+  padding: 7px 14px;
+  transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #1f68ad; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); }
+.btn-secondary:hover { background: #dff1e7; }
+.btn-success { background: var(--accent3); color: white; }
+.btn-success:hover { background: #248a57; }
+.btn-warn { background: var(--accent2); color: white; }
+.btn-warn:hover { background: #4cae36; }
+.btn-sm { padding: 4px 10px; font-size: 0.76rem; }
+.btn-full { width: 100%; justify-content: center; margin-top: 6px; }
+
+.action-bar {
+  padding: 12px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--surface);
+  border-top: 1.5px solid var(--border);
+  position: sticky; bottom: 0;
+}
+
+/* org cards */
+.org-card {
+  background: #f4fcf6;
+  border: 1.5px solid #b9e8c4;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 7px;
+  position: relative;
+}
+.org-card .org-row { display: flex; gap: 6px; margin-bottom: 5px; align-items: center; }
+.org-card .org-row:last-child { margin-bottom: 0; }
+
+/* ─── CANVAS AREA ─── */
+.canvas-area {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+.canvas-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+  flex-wrap: wrap;
+}
+.canvas-toolbar span { font-size: 0.8rem; color: var(--text2); }
+.legend { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text2); }
+.l-sq { width: 14px; height: 14px; border: 2px solid var(--male); display: inline-block; }
+.l-ci { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--female); display: inline-block; }
+.l-org { width: 14px; height: 14px; border-radius: 3px; background: #f4fcf6; border: 2px solid var(--org-color); display: inline-block; }
+
+#genogram-wrap {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+#genogram-canvas {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1.5px solid var(--border);
+  overflow: visible;
+}
+
+/* ─── SVG STYLES ─── */
+.node-male rect { fill: white; stroke: var(--male); stroke-width: 2.5; }
+.node-female circle { fill: white; stroke: var(--female); stroke-width: 2.5; }
+.node-self rect { fill: #e8f3ff; stroke: var(--male); stroke-width: 3; }
+.node-self-f circle { fill: #ebfaee; stroke: var(--female); stroke-width: 3; }
+.node-deceased line { stroke: var(--deceased); stroke-width: 2; }
+.node-org rect { fill: #f4fcf6; stroke: var(--org-color); stroke-width: 2; rx: 4; }
+.node-label { font-family: 'Noto Sans JP', sans-serif; font-size: 11px; fill: var(--text); text-anchor: middle; }
+.node-sublabel { font-family: 'Noto Sans JP', sans-serif; font-size: 9px; fill: var(--text2); text-anchor: middle; }
+.relation-line { stroke: #b8d4c5; stroke-width: 1.8; fill: none; }
+.org-line { stroke: var(--org-color); stroke-width: 1.5; stroke-dasharray: 4,3; fill: none; }
+.deceased-slash { stroke: var(--deceased); stroke-width: 2; }
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #183247; color: white;
+  padding: 10px 18px; border-radius: 8px;
+  font-size: 0.82rem;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+  z-index: 999;
+}
+#toast.show { opacity: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Section collapsible */
+.section-toggle { cursor: pointer; user-select: none; }
+.section-toggle::after { content: ' ▾'; font-size: 0.7rem; }
+.section-toggle.collapsed::after { content: ' ▸'; }
+.collapsible { overflow: hidden; transition: max-height 0.3s; }
+.collapsible.hidden { max-height: 0 !important; }
+
+.tag { display: inline-block; background: var(--surface2); border-radius: 4px; padding: 1px 7px; font-size: 0.72rem; color: var(--text2); border: 1px solid var(--border); margin: 2px; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true">
+    <defs>
+      <linearGradient id="clg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#2b7fd1"/>
+        <stop offset="100%" stop-color="#63c14b"/>
+      </linearGradient>
+    </defs>
+    <circle cx="20" cy="16" r="8" fill="#2b7fd1"/>
+    <path d="M10 36c0-8 5-12 10-12s10 4 10 12v8H10z" fill="#2b7fd1"/>
+    <circle cx="38" cy="22" r="7" fill="#63c14b"/>
+    <path d="M30 40c0-7 4-10 8-10s8 3 8 10v6H30z" fill="#63c14b"/>
+    <path d="M39 39c2-3 5-5 8-5 3 0 5 2 5 5 0 2-1 3-3 5l-6 6c-2 2-3 3-5 3-3 0-5-2-5-5 0-2 1-3 3-5z" fill="none" stroke="url(#clg)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M45 25c2-3 5-5 8-5 3 0 5 2 5 5 0 2-1 3-3 5l-6 6c-2 2-3 3-5 3-3 0-5-2-5-5 0-2 1-3 3-5z" fill="none" stroke="#2b7fd1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+  </svg>
+  <h1>CareLink Genogram<span class="sub">Family & Care Relationship Mapper</span></h1>
+</header>
+
+<div class="layout">
+  <!-- ===== LEFT PANEL ===== -->
+  <div class="panel" id="panel">
+
+    <!-- 本人情報 -->
+    <div class="panel-section">
+      <h2>👤 本人情報</h2>
+      <div class="field-row">
+        <label>氏名</label>
+        <input type="text" id="self-name" placeholder="例：山田 太郎" oninput="drawGenogram()">
+      </div>
+      <div class="field-row">
+        <label>年齢</label>
+        <input type="number" id="self-age" placeholder="歳" style="width:70px" oninput="drawGenogram()">
+        <label style="min-width:30px">性別</label>
+        <div class="radio-group">
+          <label><input type="radio" name="self-gender" value="male" checked onchange="drawGenogram()"> 男</label>
+          <label><input type="radio" name="self-gender" value="female" onchange="drawGenogram()"> 女</label>
+        </div>
+      </div>
+      <div class="field-row">
+        <label>住所</label>
+        <input type="text" id="self-addr" placeholder="市区町村など" oninput="drawGenogram()">
+      </div>
+      <div class="field-row">
+        <label>備考</label>
+        <input type="text" id="self-note" placeholder="診断名・障害区分など" oninput="drawGenogram()">
+      </div>
+    </div>
+
+    <!-- 家族・家系 -->
+    <div class="panel-section">
+      <h2 class="section-toggle" onclick="toggleSection('family-body')">👨‍👩‍👧 家族・家系 <span class="badge" id="family-count">0</span></h2>
+      <div class="collapsible" id="family-body" style="max-height:9999px">
+        <div id="family-list"></div>
+        <button class="btn btn-secondary btn-sm btn-full" onclick="addFamilyMember()">＋ 家族を追加</button>
+      </div>
+    </div>
+
+    <!-- 関係機関 -->
+    <div class="panel-section">
+      <h2 class="section-toggle" onclick="toggleSection('org-body')">🏢 関係機関 <span class="badge" id="org-count">0</span></h2>
+      <div class="collapsible" id="org-body" style="max-height:9999px">
+        <div id="org-list"></div>
+        <button class="btn btn-secondary btn-sm btn-full" id="add-org-btn" onclick="addOrg()">＋ 関係機関を追加</button>
+      </div>
+    </div>
+
+    <!-- アクションバー -->
+    <div class="action-bar">
+      <button class="btn btn-primary btn-full" onclick="copyToClipboard()" id="copy-btn"
+        style="font-size:0.9rem;padding:10px 14px;background:#36a96d">
+        📋 コピー → そのままCtrl+Vで貼り付け
+      </button>
+
+      <button class="btn btn-success btn-full" onclick="exportPNG()">
+        📸 PNGで保存
+      </button>
+
+      <div style="border-top:1px solid var(--border);margin:2px 0"></div>
+
+      <button class="btn btn-secondary btn-full" onclick="resetAll()" style="font-size:0.73rem;color:#7b8d98">🗑 リセット</button>
+    </div>
+  </div>
+
+  <!-- ===== CANVAS AREA ===== -->
+  <div class="canvas-area">
+    <div class="canvas-toolbar">
+      <div class="legend">
+        <div class="legend-item"><span class="l-sq" style="border-color:var(--male)"></span> 男性</div>
+        <div class="legend-item"><span class="l-ci" style="border-color:var(--female)"></span> 女性</div>
+        <div class="legend-item"><span class="l-sq" style="background:#e8f3ff;border-color:var(--male)"></span> 本人(男)</div>
+        <div class="legend-item"><span class="l-ci" style="background:#ebfaee;border-color:var(--female)"></span> 本人(女)</div>
+        <div class="legend-item"><span class="l-sq" style="border-color:var(--deceased);opacity:0.5"></span> 死亡</div>
+        <div class="legend-item"><span class="l-org"></span> 関係機関</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="drawGenogram()" style="margin-left:auto">🔄 再描画</button>
+    </div>
+    <div id="genogram-wrap">
+      <svg id="genogram-canvas" width="900" height="600"></svg>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ========== STATE ==========
+let familyMembers = [];
+let orgs = [];
+let familyIdSeq = 0;
+let orgIdSeq = 0;
+const MAX_ORGS = 10;
+
+const REL_OPTIONS = ['配偶者','父','母','子','兄','弟','姉','妹','祖父(父方)','祖母(父方)','祖父(母方)','祖母(母方)','息子の配偶者','娘の配偶者','孫','叔父・伯父','叔母・伯母','その他'];
+const ORG_TYPE_OPTIONS = ['病院・クリニック','介護施設','居宅支援事業所','地域包括支援センター','デイサービス','訪問介護','訪問看護','相談支援','行政機関','学校・教育機関','就労支援','その他'];
+const CONN_TYPE_OPTIONS = ['主治医','担当医','担当ケアマネ','担当相談員','担当ヘルパー','担当看護師','担当者','入所中','通所中','利用中','申請中','その他'];
+
+// ========== FAMILY ==========
+function addFamilyMember() {
+  const id = ++familyIdSeq;
+  familyMembers.push({ id, relation: '父', name: '', age: '', gender: 'male', deceased: false, note: '' });
+  renderFamilyList();
+  drawGenogram();
+}
+
+function removeFamilyMember(id) {
+  familyMembers = familyMembers.filter(m => m.id !== id);
+  renderFamilyList();
+  drawGenogram();
+}
+
+function renderFamilyList() {
+  const el = document.getElementById('family-list');
+  el.innerHTML = '';
+  document.getElementById('family-count').textContent = familyMembers.length;
+  familyMembers.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'member-card';
+    div.innerHTML = `
+      <div class="card-header">
+        <span class="card-title">家族 #${m.id}</span>
+        <button class="btn-del" onclick="removeFamilyMember(${m.id})">削除</button>
+      </div>
+      <div class="field-row">
+        <label>続柄</label>
+        <select onchange="updateFamily(${m.id},'relation',this.value)">
+          ${REL_OPTIONS.map(r=>`<option value="${r}" ${m.relation===r?'selected':''}>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-row">
+        <label>氏名</label>
+        <input type="text" value="${m.name}" placeholder="（任意）" oninput="updateFamily(${m.id},'name',this.value)">
+      </div>
+      <div class="field-row">
+        <label>年齢</label>
+        <input type="number" value="${m.age}" placeholder="歳" style="width:65px" oninput="updateFamily(${m.id},'age',this.value)">
+        <label style="min-width:30px">性別</label>
+        <div class="radio-group">
+          <label><input type="radio" name="g${m.id}" value="male" ${m.gender==='male'?'checked':''} onchange="updateFamily(${m.id},'gender','male')"> 男</label>
+          <label><input type="radio" name="g${m.id}" value="female" ${m.gender==='female'?'checked':''} onchange="updateFamily(${m.id},'gender','female')"> 女</label>
+        </div>
+      </div>
+      <div class="field-row">
+        <label>備考</label>
+        <input type="text" value="${m.note}" placeholder="診断名など" oninput="updateFamily(${m.id},'note',this.value)">
+      </div>
+      <div class="field-row">
+        <label></label>
+        <label style="min-width:auto"><input type="checkbox" ${m.deceased?'checked':''} onchange="updateFamily(${m.id},'deceased',this.checked)"> 死亡</label>
+      </div>
+    `;
+    el.appendChild(div);
+  });
+}
+
+function updateFamily(id, key, val) {
+  const m = familyMembers.find(x => x.id === id);
+  if (m) { m[key] = val; drawGenogram(); }
+}
+
+// ========== ORGS ==========
+function addOrg() {
+  if (orgs.length >= MAX_ORGS) { showToast('関係機関は最大10件です'); return; }
+  const id = ++orgIdSeq;
+  orgs.push({ id, type: '病院・クリニック', name: '' });
+  renderOrgList();
+  drawGenogram();
+}
+
+function removeOrg(id) {
+  orgs = orgs.filter(o => o.id !== id);
+  renderOrgList();
+  drawGenogram();
+}
+
+function renderOrgList() {
+  const el = document.getElementById('org-list');
+  el.innerHTML = '';
+  document.getElementById('org-count').textContent = orgs.length;
+  document.getElementById('add-org-btn').disabled = orgs.length >= MAX_ORGS;
+  orgs.forEach(o => {
+    const div = document.createElement('div');
+    div.className = 'org-card';
+    div.innerHTML = `
+      <div class="org-row">
+        <input type="text" value="${o.name}" placeholder="機関名（例：ひまわりクリニック）" style="flex:1" oninput="updateOrg(${o.id},'name',this.value)">
+        <button class="btn-del" onclick="removeOrg(${o.id})">削除</button>
+      </div>
+    `;
+    el.appendChild(div);
+  });
+}
+
+function updateOrg(id, key, val) {
+  const o = orgs.find(x => x.id === id);
+  if (o) { o[key] = val; drawGenogram(); }
+}
+
+// ========== DRAW GENOGRAM ==========
+function getSelfData() {
+  return {
+    name: document.getElementById('self-name').value || '本人',
+    age: document.getElementById('self-age').value,
+    gender: document.querySelector('input[name="self-gender"]:checked').value,
+    addr: document.getElementById('self-addr').value,
+    note: document.getElementById('self-note').value,
+  };
+}
+
+function drawGenogram() {
+  const svg = document.getElementById('genogram-canvas');
+  svg.innerHTML = '';
+  const self = getSelfData();
+
+  // ─── Layout params ───
+  const NODE_W = 72, NODE_H = 72, NODE_R = 36;
+  const HGAP = 90, VGAP = 110;
+  const PAD = 40;
+
+  // Categorize family by relation group
+  const relOrder = {
+    '祖父(父方)':0,'祖母(父方)':1,'祖父(母方)':2,'祖母(母方)':3,
+    '父':4,'母':5,'兄':6,'弟':7,'姉':8,'妹':9,
+    '配偶者':10,'息子の配偶者':11,'娘の配偶者':12,
+    '子':13,'孫':14,
+    '叔父・伯父':15,'叔母・伯母':16,'その他':17
+  };
+  const generationOf = {
+    '祖父(父方)': -2,'祖母(父方)':-2,'祖父(母方)':-2,'祖母(母方)':-2,
+    '父':-1,'母':-1,'叔父・伯父':-1,'叔母・伯母':-1,
+    '兄':0,'弟':0,'姉':0,'妹':0,'配偶者':0,
+    '息子の配偶者':1,'娘の配偶者':1,'子':1,
+    '孫':2
+  };
+
+  const byGen = { '-2':[], '-1':[], '0':[], '1':[], '2':[] };
+  familyMembers.forEach(m => {
+    const g = generationOf[m.relation] !== undefined ? generationOf[m.relation] : 0;
+    byGen[String(g)].push(m);
+  });
+
+  // Calculate positions
+  const genYMap = { '-2': 0, '-1': 1, '0': 2, '1': 3, '2': 4 };
+  const usedGens = ['-2','-1','0','1','2'].filter(g => g === '0' || byGen[g].length > 0);
+  const genRowIdx = {};
+  usedGens.forEach((g, i) => { genRowIdx[g] = i; });
+
+  const totalRows = usedGens.length;
+  const svgH = PAD * 2 + totalRows * VGAP + 80;
+
+  const gen0Members = byGen['0'];
+  const siblings = gen0Members.filter(m => ['兄','弟','姉','妹'].includes(m.relation));
+  const spouses = gen0Members.filter(m => ['配偶者','息子の配偶者','娘の配偶者'].includes(m.relation));
+  const others0 = gen0Members.filter(m => !['兄','弟','姉','妹','配偶者','息子の配偶者','娘の配偶者'].includes(m.relation));
+
+  const gen0Count = siblings.length + 1 + spouses.length + others0.length;
+  const centerX = PAD + gen0Count * (NODE_W + HGAP) / 2 + 60;
+
+  const hasOrgs = orgs.length > 0;
+  const ORG_W = 160, ORG_H = 44;
+
+  const positions = {};
+
+  function getRowY(gen) {
+    const idx = genRowIdx[String(gen)] ?? genRowIdx['0'];
+    return PAD + idx * VGAP + 40;
+  }
+
+  const selfY = getRowY(0);
+  let gen0X = centerX - (gen0Count * (NODE_W + HGAP)) / 2 + (NODE_W + HGAP) / 2;
+  siblings.forEach((m, i) => {
+    positions[`fam_${m.id}`] = { x: gen0X + i * (NODE_W + HGAP), y: selfY, w: NODE_W, h: NODE_H };
+  });
+  const selfX = gen0X + siblings.length * (NODE_W + HGAP);
+  positions['self'] = { x: selfX, y: selfY, w: NODE_W, h: NODE_H };
+  spouses.forEach((m, i) => {
+    positions[`fam_${m.id}`] = { x: selfX + (i + 1) * (NODE_W + HGAP), y: selfY, w: NODE_W, h: NODE_H };
+  });
+
+  const parents = byGen['-1'];
+  if (parents.length > 0) {
+    const py = getRowY(-1);
+    const pStartX = selfX - (parents.length - 1) * (NODE_W + HGAP) / 2;
+    parents.forEach((m, i) => {
+      positions[`fam_${m.id}`] = { x: pStartX + i * (NODE_W + HGAP), y: py, w: NODE_W, h: NODE_H };
+    });
+  }
+
+  const gps = byGen['-2'];
+  if (gps.length > 0) {
+    const gpy = getRowY(-2);
+    const gpStartX = selfX - (gps.length - 1) * (NODE_W + HGAP) / 2;
+    gps.forEach((m, i) => {
+      positions[`fam_${m.id}`] = { x: gpStartX + i * (NODE_W + HGAP), y: gpy, w: NODE_W, h: NODE_H };
+    });
+  }
+
+  const children = byGen['1'].filter(m => m.relation === '子');
+  const childSpouses = byGen['1'].filter(m => ['息子の配偶者','娘の配偶者'].includes(m.relation));
+  if (children.length > 0) {
+    const cy = getRowY(1);
+    const cStartX = selfX - (children.length - 1) * (NODE_W + HGAP) / 2;
+    children.forEach((m, i) => {
+      positions[`fam_${m.id}`] = { x: cStartX + i * (NODE_W + HGAP), y: cy, w: NODE_W, h: NODE_H };
+    });
+    childSpouses.forEach((m, i) => {
+      const cx2 = cStartX + (children.length + i) * (NODE_W + HGAP);
+      positions[`fam_${m.id}`] = { x: cx2, y: cy, w: NODE_W, h: NODE_H };
+    });
+  }
+
+  const grandchildren = byGen['2'];
+  if (grandchildren.length > 0) {
+    const gcy = getRowY(2);
+    const gcStartX = selfX - (grandchildren.length - 1) * (NODE_W + HGAP) / 2;
+    grandchildren.forEach((m, i) => {
+      positions[`fam_${m.id}`] = { x: gcStartX + i * (NODE_W + HGAP), y: gcy, w: NODE_W, h: NODE_H };
+    });
+  }
+
+  {
+    const minX = Math.min(...Object.values(positions).map(p => p.x));
+    const offsetX = PAD - minX;
+    if (Math.abs(offsetX) > 1) {
+      Object.values(positions).forEach(p => { p.x += offsetX; });
+    }
+  }
+
+  const orgPositions = {};
+  const famAllX = Object.values(positions).map(p => p.x + NODE_W);
+  const famAllY = Object.values(positions).map(p => p.y + NODE_H);
+  const famMaxY = Math.max(...famAllY, 400);
+  const famMinX = Math.min(...Object.values(positions).map(p => p.x), selfX);
+  const famMaxX = Math.max(...famAllX, selfX + NODE_W);
+
+  const ORG_GAP = 10;
+  const ORG_PAD_X = 20;
+  const orgRowY = famMaxY + 36;
+
+  function calcTextW(str) {
+    let w = 0;
+    for (const ch of (str || '')) {
+      const code = ch.charCodeAt(0);
+      const isWide = (code >= 0x1100 && code <= 0x115F)
+        || (code >= 0x2E80)
+        || (code >= 0xFF01 && code <= 0xFF60)
+        || (code >= 0xFFE0 && code <= 0xFFE6);
+      w += isWide ? 13 : 8;
+    }
+    return w;
+  }
+
+  const orgWidths = orgs.map(o => {
+    const nameW = calcTextW(o.name || '（名称未設定）');
+    return Math.ceil(nameW) + ORG_PAD_X * 2 + 30;
+  });
+
+  const orgTotalW = orgWidths.reduce((s, w) => s + w, 0) + ORG_GAP * (orgs.length - 1);
+  const orgRowCenterX = (famMinX + famMaxX) / 2;
+  let ox = orgRowCenterX - orgTotalW / 2;
+
+  orgs.forEach((o, i) => {
+    orgPositions[o.id] = { x: ox, y: orgRowY, w: orgWidths[i] };
+    ox += orgWidths[i] + ORG_GAP;
+  });
+
+  const allX = [...famAllX, ...Object.values(orgPositions).map(p => p.x + p.w)];
+  const allY = [...famAllY, ...Object.values(orgPositions).map(p => p.y + ORG_H)];
+  const totalW = Math.max(...allX, 600) + PAD + 20;
+  const totalH = Math.max(...allY, 400) + PAD + 60;
+
+  svg.setAttribute('width', totalW);
+  svg.setAttribute('height', totalH);
+
+  const ns = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(ns, tag);
+    Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k, v));
+    (parent || svg).appendChild(e);
+    return e;
+  }
+  function text(str, x, y, cls, parent) {
+    const t = document.createElementNS(ns, 'text');
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    t.setAttribute('class', cls);
+    t.textContent = str;
+    (parent || svg).appendChild(t);
+    return t;
+  }
+
+  const lineStyles = {
+    'relation-line': { stroke: '#b8d4c5', 'stroke-width': '1.8', fill: 'none' },
+    'org-line':      { stroke: '#63c14b', 'stroke-width': '1.5', 'stroke-dasharray': '4,3', fill: 'none' },
+  };
+  const drawLine = (x1,y1,x2,y2,cls) => {
+    const s = lineStyles[cls] || lineStyles['relation-line'];
+    return el('line', {x1,y1,x2,y2, ...s});
+  };
+  const drawPath = (d, cls) => {
+    const s = lineStyles[cls] || lineStyles['relation-line'];
+    return el('path', {d, ...s});
+  };
+
+  const father = byGen['-1'].find(m => m.relation === '父');
+  const mother = byGen['-1'].find(m => m.relation === '母');
+  const fp = father ? positions[`fam_${father.id}`] : null;
+  const mp = mother ? positions[`fam_${mother.id}`] : null;
+
+  const sibAndSelf = [
+    ...siblings.map(m => positions[`fam_${m.id}`]),
+    positions['self']
+  ].filter(Boolean);
+
+  if ((fp || mp) && sibAndSelf.length > 0) {
+    const parentY = fp ? fp.y + NODE_H / 2 : mp.y + NODE_H / 2;
+    if (fp && mp) {
+      drawLine(fp.x + NODE_W/2, parentY, mp.x + NODE_W/2, parentY);
+    }
+    const parentMidX = fp && mp
+      ? (fp.x + NODE_W/2 + mp.x + NODE_W/2) / 2
+      : fp ? fp.x + NODE_W/2 : mp.x + NODE_W/2;
+
+    const childXs = sibAndSelf.map(p => p.x + NODE_W/2);
+    const minX = Math.min(...childXs);
+    const maxX = Math.max(...childXs);
+    const barY  = selfY - 30;
+
+    drawLine(parentMidX, parentY, parentMidX, barY);
+    if (childXs.length > 1) drawLine(minX, barY, maxX, barY);
+    sibAndSelf.forEach(p => {
+      drawLine(p.x + NODE_W/2, barY, p.x + NODE_W/2, p.y);
+    });
+  } else if (sibAndSelf.length > 0) {
+  }
+
+  if (sibAndSelf.length === 1 && (fp || mp)) {
+  }
+
+  const fatherMembers = byGen['-1'].filter(m => m.relation === '父');
+  const motherMembers = byGen['-1'].filter(m => m.relation === '母');
+  const gpFather = byGen['-2'].filter(m => ['祖父(父方)','祖母(父方)'].includes(m.relation));
+  const gpMother = byGen['-2'].filter(m => ['祖父(母方)','祖母(母方)'].includes(m.relation));
+
+  if (gpFather.length > 0 && fatherMembers.length > 0) {
+    const fp2 = positions[`fam_${fatherMembers[0].id}`];
+    if (fp2) {
+      const gpXs  = gpFather.map(gp => positions[`fam_${gp.id}`]).filter(Boolean);
+      const gpY   = gpXs[0] ? gpXs[0].y + NODE_H / 2 : 0;
+      const barY2 = fp2.y - 30;
+      if (gpXs.length >= 2) {
+        const minGX = Math.min(...gpXs.map(p => p.x + NODE_W/2));
+        const maxGX = Math.max(...gpXs.map(p => p.x + NODE_W/2));
+        const midGX = (minGX + maxGX) / 2;
+        drawLine(minGX, gpY, maxGX, gpY);
+        drawLine(midGX, gpY, midGX, barY2);
+      } else if (gpXs.length === 1) {
+        drawLine(gpXs[0].x + NODE_W/2, gpXs[0].y + NODE_H, fp2.x + NODE_W/2, fp2.y);
+      }
+      if (gpXs.length >= 2) drawLine(fp2.x + NODE_W/2, barY2, fp2.x + NODE_W/2, fp2.y);
+    }
+  }
+  if (gpMother.length > 0 && motherMembers.length > 0) {
+    const mp2 = positions[`fam_${motherMembers[0].id}`];
+    if (mp2) {
+      const gpXs  = gpMother.map(gp => positions[`fam_${gp.id}`]).filter(Boolean);
+      const gpY   = gpXs[0] ? gpXs[0].y + NODE_H / 2 : 0;
+      const barY2 = mp2.y - 30;
+      if (gpXs.length >= 2) {
+        const minGX = Math.min(...gpXs.map(p => p.x + NODE_W/2));
+        const maxGX = Math.max(...gpXs.map(p => p.x + NODE_W/2));
+        const midGX = (minGX + maxGX) / 2;
+        drawLine(minGX, gpY, maxGX, gpY);
+        drawLine(midGX, gpY, midGX, barY2);
+      } else if (gpXs.length === 1) {
+        drawLine(gpXs[0].x + NODE_W/2, gpXs[0].y + NODE_H, mp2.x + NODE_W/2, mp2.y);
+      }
+      if (gpXs.length >= 2) drawLine(mp2.x + NODE_W/2, barY2, mp2.x + NODE_W/2, mp2.y);
+    }
+  }
+
+  spouses.forEach(m => {
+    const sp = positions[`fam_${m.id}`];
+    if (sp) {
+      const y = selfY + NODE_H/2;
+      drawLine(selfX + NODE_W, y - 2, sp.x, y - 2);
+      drawLine(selfX + NODE_W, y + 2, sp.x, y + 2);
+    }
+  });
+
+  if (children.length === 1) {
+    const cp = positions[`fam_${children[0].id}`];
+    if (cp) drawLine(selfX + NODE_W/2, selfY + NODE_H, cp.x + NODE_W/2, cp.y);
+  } else if (children.length > 1) {
+    const childXs = children.map(m => positions[`fam_${m.id}`]).filter(Boolean).map(p => p.x + NODE_W/2);
+    const barY = selfY + NODE_H + 30;
+    const minX = Math.min(...childXs);
+    const maxX = Math.max(...childXs);
+    drawLine(selfX + NODE_W/2, selfY + NODE_H, selfX + NODE_W/2, barY);
+    drawLine(minX, barY, maxX, barY);
+    children.forEach(m => {
+      const cp = positions[`fam_${m.id}`];
+      if (cp) drawLine(cp.x + NODE_W/2, barY, cp.x + NODE_W/2, cp.y);
+    });
+  }
+
+  if (orgs.length > 0) {
+    const orgBarY = orgRowY - 18;
+    const selfXAdj = positions['self'].x;
+    drawLine(selfXAdj + NODE_W/2, selfY + NODE_H, selfXAdj + NODE_W/2, orgBarY, 'org-line');
+    const orgXs = orgs.map(o => orgPositions[o.id]).filter(Boolean).map(p => p.x + p.w/2);
+    if (orgXs.length > 1) {
+      drawLine(Math.min(...orgXs), orgBarY, Math.max(...orgXs), orgBarY, 'org-line');
+    }
+    orgs.forEach(o => {
+      const op = orgPositions[o.id];
+      if (op) drawLine(op.x + op.w/2, orgBarY, op.x + op.w/2, op.y, 'org-line');
+    });
+  }
+
+  function drawPerson(p, isSelf, data) {
+    const cx = p.x + NODE_W/2;
+    const cy = p.y + NODE_H/2;
+    const g = document.createElementNS(ns, 'g');
+    svg.appendChild(g);
+
+    if (data.gender === 'male') {
+      const rect = document.createElementNS(ns, 'rect');
+      rect.setAttribute('x', p.x); rect.setAttribute('y', p.y);
+      rect.setAttribute('width', NODE_W); rect.setAttribute('height', NODE_H);
+      rect.setAttribute('rx', 3);
+      rect.setAttribute('fill', isSelf ? '#e8f3ff' : 'white');
+      rect.setAttribute('stroke', '#2b7fd1'); rect.setAttribute('stroke-width', isSelf ? 3 : 2);
+      g.appendChild(rect);
+    } else {
+      const circle = document.createElementNS(ns, 'circle');
+      circle.setAttribute('cx', cx); circle.setAttribute('cy', cy);
+      circle.setAttribute('r', NODE_R - 2);
+      circle.setAttribute('fill', isSelf ? '#ebfaee' : 'white');
+      circle.setAttribute('stroke', '#63c14b'); circle.setAttribute('stroke-width', isSelf ? 3 : 2);
+      g.appendChild(circle);
+    }
+
+    if (data.deceased) {
+      const sl = document.createElementNS(ns, 'line');
+      sl.setAttribute('x1', p.x + 6); sl.setAttribute('y1', p.y + NODE_H - 6);
+      sl.setAttribute('x2', p.x + NODE_W - 6); sl.setAttribute('y2', p.y + 6);
+      sl.setAttribute('stroke', '#7f8c97');
+      sl.setAttribute('stroke-width', '2');
+      g.appendChild(sl);
+    }
+
+    const nameText = document.createElementNS(ns, 'text');
+    nameText.setAttribute('x', cx); nameText.setAttribute('y', cy + (data.age ? -4 : 2));
+    nameText.setAttribute('class', 'node-label');
+    nameText.setAttribute('text-anchor', 'middle');
+    nameText.setAttribute('dominant-baseline', 'middle');
+    nameText.setAttribute('font-family', "Noto Sans JP, Hiragino Sans, Yu Gothic, Meiryo, sans-serif");
+    nameText.setAttribute('font-size', '11');
+    nameText.setAttribute('fill', '#183247');
+    nameText.setAttribute('font-weight', isSelf ? '700' : '400');
+    nameText.textContent = data.name ? (data.name.length > 7 ? data.name.slice(0,7)+'…' : data.name) : (isSelf ? '本人' : '');
+    g.appendChild(nameText);
+
+    if (data.age) {
+      const ageText = document.createElementNS(ns, 'text');
+      ageText.setAttribute('x', cx); ageText.setAttribute('y', cy + 10);
+      ageText.setAttribute('class', 'node-sublabel');
+      ageText.setAttribute('text-anchor', 'middle');
+      ageText.setAttribute('font-family', "Noto Sans JP, Hiragino Sans, Yu Gothic, Meiryo, sans-serif");
+      ageText.setAttribute('font-size', '9');
+      ageText.setAttribute('fill', '#5d7584');
+      ageText.textContent = data.age + '歳';
+      g.appendChild(ageText);
+    }
+
+    if (data.relation) {
+      const rt = document.createElementNS(ns, 'text');
+      rt.setAttribute('x', cx); rt.setAttribute('y', p.y + NODE_H + 14);
+      rt.setAttribute('class', 'node-sublabel');
+      rt.setAttribute('text-anchor', 'middle');
+      rt.setAttribute('font-family', "Noto Sans JP, Hiragino Sans, Yu Gothic, Meiryo, sans-serif");
+      rt.setAttribute('font-size', '9');
+      rt.setAttribute('fill', '#5d7584');
+      rt.textContent = data.relation;
+      g.appendChild(rt);
+    }
+    if (isSelf) {
+      const st = document.createElementNS(ns, 'text');
+      st.setAttribute('x', cx); st.setAttribute('y', p.y + NODE_H + 14);
+      st.setAttribute('class', 'node-sublabel');
+      st.setAttribute('text-anchor', 'middle');
+      st.setAttribute('font-family', "Noto Sans JP, Hiragino Sans, Yu Gothic, Meiryo, sans-serif");
+      st.setAttribute('font-size', '9');
+      st.setAttribute('fill', '#2b7fd1');
+      st.setAttribute('font-weight', '700');
+      st.textContent = '★本人';
+      g.appendChild(st);
+    }
+  }
+
+  drawPerson(positions['self'], true, { ...getSelfData(), relation: null });
+
+  familyMembers.forEach(m => {
+    const p = positions[`fam_${m.id}`];
+    if (p) drawPerson(p, false, m);
+  });
+
+  orgs.forEach(o => {
+    const op = orgPositions[o.id];
+    if (!op) return;
+    const ow = op.w;
+    const g = document.createElementNS(ns, 'g');
+    svg.appendChild(g);
+    const rect = document.createElementNS(ns, 'rect');
+    rect.setAttribute('x', op.x); rect.setAttribute('y', op.y);
+    rect.setAttribute('width', ow); rect.setAttribute('height', ORG_H);
+    rect.setAttribute('rx', 6);
+    rect.setAttribute('fill', '#f4fcf6');
+    rect.setAttribute('stroke', '#63c14b'); rect.setAttribute('stroke-width', 2);
+    g.appendChild(rect);
+
+    const nameStr = o.name || '（名称未設定）';
+    const t2 = document.createElementNS(ns, 'text');
+    t2.setAttribute('x', op.x + ow/2); t2.setAttribute('y', op.y + ORG_H/2 + 4);
+    t2.setAttribute('class', 'node-label');
+    t2.setAttribute('text-anchor', 'middle');
+    t2.setAttribute('font-family', "Noto Sans JP, Hiragino Sans, Yu Gothic, Meiryo, sans-serif");
+    t2.setAttribute('font-size', '11');
+    t2.setAttribute('font-weight', '700');
+    t2.setAttribute('fill', '#2a6d46');
+    t2.textContent = nameStr;
+    g.appendChild(t2);
+  });
+
+  const genLabels = { '-2':'祖父母世代', '-1':'親世代', '0':'本人世代', '1':'子世代', '2':'孫世代' };
+  usedGens.forEach(g => {
+    const y = getRowY(parseInt(g));
+    const t = document.createElementNS(ns, 'text');
+    t.setAttribute('x', 8); t.setAttribute('y', y + NODE_H/2 + 4);
+    t.setAttribute('font-family', 'Noto Sans JP, Hiragino Sans, Yu Gothic, Meiryo, sans-serif');
+    t.setAttribute('font-size', '9');
+    t.setAttribute('fill', '#a8b8bf');
+    t.setAttribute('writing-mode', 'tb');
+    t.textContent = genLabels[g] || '';
+    svg.appendChild(t);
+  });
+
+  const now = new Date();
+  const stamp = document.createElementNS(ns, 'text');
+  stamp.setAttribute('x', 10); stamp.setAttribute('y', totalH - 8);
+  stamp.setAttribute('font-family', 'Noto Sans JP, Hiragino Sans, Yu Gothic, Meiryo, sans-serif');
+  stamp.setAttribute('font-size', '9');
+  stamp.setAttribute('fill', '#b7c5cc');
+  stamp.setAttribute('text-anchor', 'start');
+  stamp.textContent = `作成日: ${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
+  svg.appendChild(stamp);
+}
+
+// ========== EXPORT PNG (高解像度) ==========
+async function exportPNG() {
+  showToast('PNG出力中…');
+  try {
+    const blob = await svgToBlob(3);
+    const link = document.createElement('a');
+    const self = getSelfData();
+    const now  = new Date();
+    const ds   = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+    link.download = `CareLink_Genogram_${self.name || '本人'}_${ds}.png`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+    showToast('✅ PNG保存しました');
+  } catch(e) {
+    showToast('⚠️ PNG保存失敗: ' + e.message);
+  }
+}
+
+// ========== CLIPBOARD COPY ==========
+let _fontCssCache = null;
+async function getFontCss() {
+  if (_fontCssCache) return _fontCssCache;
+  try {
+    const urls = [
+      'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap&subset=japanese'
+    ];
+    const faces = [...document.fonts].filter(f => f.family.includes('Noto Sans JP') && f.status === 'loaded');
+    if (faces.length > 0) {
+    }
+    _fontCssCache = `
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+      text { font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; }
+    `;
+  } catch(e) {
+    _fontCssCache = '';
+  }
+  return _fontCssCache;
+}
+
+async function svgToBlob(scale) {
+  await document.fonts.ready;
+
+  const svg = document.getElementById('genogram-canvas');
+  const w = parseInt(svg.getAttribute('width'))  || 900;
+  const h = parseInt(svg.getAttribute('height')) || 600;
+  const s = scale || 2;
+
+  const ns = 'http://www.w3.org/2000/svg';
+
+  let styleEl = svg.querySelector('style[data-font-embed]');
+  if (!styleEl) {
+    styleEl = document.createElementNS(ns, 'style');
+    styleEl.setAttribute('data-font-embed', '1');
+    svg.insertBefore(styleEl, svg.firstChild);
+  }
+  styleEl.textContent = `
+    text {
+      font-family: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+                   'Yu Gothic', 'YuGothic', 'Meiryo', sans-serif;
+    }
+  `;
+
+  const svgData = new XMLSerializer().serializeToString(svg);
+
+  svg.removeChild(styleEl);
+
+  return new Promise((resolve, reject) => {
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = w * s;
+      canvas.height = h * s;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob => {
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas変換失敗'));
+      }, 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG読み込み失敗')); };
+    img.src = url;
+  });
+}
+
+async function copyToClipboard() {
+  const btn = document.getElementById('copy-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ コピー中…';
+  try {
+    const blob = await svgToBlob(2);
+    await navigator.clipboard.write([
+      new ClipboardItem({ 'image/png': blob })
+    ]);
+    btn.textContent = '✅ コピー完了！Ctrl+Vで貼り付けできます';
+    btn.style.background = '#36a96d';
+    showToast('✅ 画像をコピーしました');
+    setTimeout(() => {
+      btn.textContent = '📋 コピー → そのままCtrl+Vで貼り付け';
+      btn.style.background = '#36a96d';
+      btn.disabled = false;
+    }, 3000);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '📋 コピー → そのままCtrl+Vで貼り付け';
+    showToast('⚠️ このブラウザは非対応です。PNGで保存します');
+    await exportPNG();
+  }
+}
+
+// ========== UTILS ==========
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('hidden');
+}
+
+function resetAll() {
+  if (!confirm('すべてのデータをリセットしますか？')) return;
+  document.getElementById('self-name').value = '';
+  document.getElementById('self-age').value = '';
+  document.getElementById('self-addr').value = '';
+  document.getElementById('self-note').value = '';
+  document.querySelector('input[name="self-gender"][value="male"]').checked = true;
+  familyMembers = []; orgs = [];
+  familyIdSeq = 0; orgIdSeq = 0;
+  renderFamilyList(); renderOrgList(); drawGenogram();
+  showToast('リセットしました');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ========== INIT ==========
+renderFamilyList();
+renderOrgList();
+drawGenogram();
+</script>
+</body>
+</html>
